@@ -239,6 +239,22 @@ export const MOCK_GROUPS = [
   },
 ];
 
+export const ZODIAC_SIGNS = [
+  { value: 'aries', label: 'Aries', icon: '♈', dates: 'Mar 21 - Apr 19' },
+  { value: 'taurus', label: 'Taurus', icon: '♉', dates: 'Apr 20 - May 20' },
+  { value: 'gemini', label: 'Gemini', icon: '♊', dates: 'May 21 - Jun 20' },
+  { value: 'cancer', label: 'Cancer', icon: '♋', dates: 'Jun 21 - Jul 22' },
+  { value: 'leo', label: 'Leo', icon: '♌', dates: 'Jul 23 - Aug 22' },
+  { value: 'virgo', label: 'Virgo', icon: '♍', dates: 'Aug 23 - Sep 22' },
+  { value: 'libra', label: 'Libra', icon: '♎', dates: 'Sep 23 - Oct 22' },
+  { value: 'scorpio', label: 'Scorpio', icon: '♏', dates: 'Oct 23 - Nov 21' },
+  { value: 'sagittarius', label: 'Sagittarius', icon: '♐', dates: 'Nov 22 - Dec 21' },
+  { value: 'capricorn', label: 'Capricorn', icon: '♑', dates: 'Dec 22 - Jan 19' },
+  { value: 'aquarius', label: 'Aquarius', icon: '♒', dates: 'Jan 20 - Feb 18' },
+  { value: 'pisces', label: 'Pisces', icon: '♓', dates: 'Feb 19 - Mar 20' },
+] as const;
+
 export type IndianState = typeof INDIAN_STATES[number]['value'];
 export type Language = typeof LANGUAGES[number]['value'];
 export type Deity = typeof DEITIES[number]['value'];
+export type ZodiacSign = typeof ZODIAC_SIGNS[number]['value'];

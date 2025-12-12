@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
+import { INDIAN_STATES, LANGUAGES, DEITIES, ZODIAC_SIGNS } from '@/lib/constants';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { cn } from '@/lib/utils';
 
-type Step = 'welcome' | 'state' | 'language' | 'deity' | 'complete';
+type Step = 'welcome' | 'name' | 'zodiac' | 'state' | 'language' | 'deity' | 'complete';
 
 export function OnboardingFlow() {
   const [step, setStep] = useState<Step>('welcome');
   const { preferences, updatePreferences, completeOnboarding } = useUserPreferences();
 
-  const steps: Step[] = ['welcome', 'state', 'language', 'deity', 'complete'];
+  const steps: Step[] = ['welcome', 'name', 'zodiac', 'state', 'language', 'deity', 'complete'];
   const currentIndex = steps.indexOf(step);
 
   const goNext = () => {
@@ -47,6 +47,24 @@ export function OnboardingFlow() {
         <AnimatePresence mode="wait">
           {step === 'welcome' && (
             <WelcomeStep key="welcome" onNext={goNext} />
+          )}
+          {step === 'name' && (
+            <NameStep
+              key="name"
+              selected={preferences.name}
+              onSelect={(name) => updatePreferences({ name })}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+          {step === 'zodiac' && (
+            <ZodiacStep
+              key="zodiac"
+              selected={preferences.zodiacSign}
+              onSelect={(zodiacSign) => updatePreferences({ zodiacSign })}
+              onNext={goNext}
+              onBack={goBack}
+            />
           )}
           {step === 'state' && (
             <StateStep
@@ -254,6 +272,109 @@ function DeityStep({ selected, onSelect, onNext, onBack }: StepProps) {
           >
             <span className="text-3xl mb-2 block">{deity.icon}</span>
             <span className="font-medium text-sm">{deity.label}</span>
+          </motion.button>
+        ))}
+      </div>
+
+      <div className="flex gap-3 mt-6">
+        <Button variant="outline" onClick={onBack} className="flex-1 h-12">
+          <ChevronLeft className="mr-2 w-4 h-4" />
+          Back
+        </Button>
+        <Button
+          onClick={onNext}
+          disabled={!selected}
+          className="flex-1 h-12 gradient-saffron shadow-warm"
+        >
+          Continue
+          <ChevronRight className="ml-2 w-4 h-4" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+function NameStep({ selected, onSelect, onNext, onBack }: StepProps) {
+  const [name, setName] = useState(selected || '');
+
+  const handleSubmit = () => {
+    if (name.trim()) {
+      onSelect(name.trim());
+      onNext();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      className="w-full max-w-md"
+    >
+      <h2 className="text-2xl font-display font-bold text-center mb-2">What's your name?</h2>
+      <p className="text-muted-foreground text-center mb-6">
+        We'll personalize your experience
+      </p>
+
+      <div className="space-y-4">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          placeholder="Enter your name"
+          className="w-full px-4 py-3 rounded-xl border-2 border-border bg-card focus:border-primary focus:outline-none text-lg"
+          autoFocus
+        />
+      </div>
+
+      <div className="flex gap-3 mt-6">
+        <Button variant="outline" onClick={onBack} className="flex-1 h-12">
+          <ChevronLeft className="mr-2 w-4 h-4" />
+          Back
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={!name.trim()}
+          className="flex-1 h-12 gradient-saffron shadow-warm"
+        >
+          Continue
+          <ChevronRight className="ml-2 w-4 h-4" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+function ZodiacStep({ selected, onSelect, onNext, onBack }: StepProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      className="w-full max-w-md"
+    >
+      <h2 className="text-2xl font-display font-bold text-center mb-2">Your Zodiac Sign</h2>
+      <p className="text-muted-foreground text-center mb-6">
+        We'll provide personalized horoscopes
+      </p>
+
+      <div className="grid grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto p-1">
+        {ZODIAC_SIGNS.map((sign) => (
+          <motion.button
+            key={sign.value}
+            onClick={() => onSelect(sign.value)}
+            className={cn(
+              'p-4 rounded-xl border-2 transition-all text-center',
+              selected === sign.value
+                ? 'border-primary bg-primary/10 shadow-warm'
+                : 'border-border bg-card hover:border-primary/50'
+            )}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="text-3xl mb-2 block">{sign.icon}</span>
+            <span className="font-medium text-xs">{sign.label}</span>
+            <span className="text-xs text-muted-foreground block mt-1">{sign.dates}</span>
           </motion.button>
         ))}
       </div>

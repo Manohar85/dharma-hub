@@ -4,6 +4,8 @@ interface UserPreferences {
   state: string;
   language: string;
   deity: string;
+  name: string;
+  zodiacSign: string;
   onboardingComplete: boolean;
 }
 
@@ -18,6 +20,8 @@ const defaultPreferences: UserPreferences = {
   state: 'other',
   language: 'hindi',
   deity: 'other',
+  name: 'Devotee',
+  zodiacSign: 'leo', // Default to Leo as specified
   onboardingComplete: false,
 };
 
