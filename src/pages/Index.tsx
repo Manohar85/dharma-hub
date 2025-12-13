@@ -1,6 +1,6 @@
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { Home, Music, Video, MapPin, Users, User } from 'lucide-react';
+import { Home, Music, Video, MapPin, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
 import { YourDayWidget } from '@/components/dashboard/YourDayWidget';
@@ -13,6 +13,7 @@ import { DailyBhajanWidget } from '@/components/dashboard/DailyBhajanWidget';
 import { TempleOfDayWidget } from '@/components/dashboard/TempleOfDayWidget';
 import { PanchangamWidget } from '@/components/dashboard/PanchangamWidget';
 import { AIChatbot } from '@/components/ai-assistant/AIChatbot';
+import { BottomNav } from '@/components/navigation/BottomNav';
 import { useBackgroundRefresh } from '@/hooks/useBackgroundRefresh';
 import { useState } from 'react';
 import { Bot } from 'lucide-react';
@@ -123,9 +124,9 @@ function MainApp() {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
-            { icon: Music, label: 'Regional Music', desc: 'Devotional songs', color: 'bg-primary', link: '#' },
-            { icon: Video, label: 'Reels', desc: 'Watch & create', color: 'bg-accent', link: '#' },
-            { icon: MapPin, label: 'Temples', desc: 'Nearby temples', color: 'bg-gold', link: '#' },
+            { icon: Music, label: 'Regional Music', desc: 'Devotional songs', color: 'bg-primary', link: '/music' },
+            { icon: Video, label: 'Reels', desc: 'Watch & create', color: 'bg-accent', link: '/reels' },
+            { icon: MapPin, label: 'Temples', desc: 'Nearby temples', color: 'bg-gold', link: '/temples' },
             { icon: Users, label: 'Community', desc: 'Join groups', color: 'bg-temple', link: '#' },
             { icon: Bot, label: 'Ask Divine', desc: 'AI Assistant', color: 'bg-gradient-to-br from-primary to-gold', link: '/ai-helper' },
           ].map((item) => (
@@ -151,22 +152,7 @@ function MainApp() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border glass-warm">
-        <div className="flex justify-around py-3">
-          {[
-            { icon: Home, label: 'Home', active: true },
-            { icon: Music, label: 'Music' },
-            { icon: Video, label: 'Reels' },
-            { icon: MapPin, label: 'Temples' },
-            { icon: User, label: 'Profile' },
-          ].map((item) => (
-            <button key={item.label} className={`flex flex-col items-center gap-1 px-3 ${item.active ? 'text-primary' : 'text-muted-foreground'}`}>
-              <item.icon className="w-5 h-5" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      <BottomNav />
 
       {/* Floating AI Assistant Button */}
       {!showChatbot && (
