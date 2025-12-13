@@ -1,4 +1,4 @@
-import { useUserPreferences, UserPreferencesProvider } from '@/contexts/UserPreferencesContext';
+import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { Home, Music, Video, MapPin, Users, User } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -207,10 +207,4 @@ function AppContent() {
   return <MainApp />;
 }
 
-const Index = () => (
-  <UserPreferencesProvider>
-    <AppContent />
-  </UserPreferencesProvider>
-);
-
-export default Index;
+export default AppContent;
