@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
+import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { lazy, Suspense } from "react";
 
 // Lazy load pages for better performance
@@ -30,24 +31,26 @@ const PageLoader = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserPreferencesProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/music" element={<MusicPage />} />
-              <Route path="/reels" element={<ReelsPage />} />
-              <Route path="/temples" element={<TemplesPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/ai-helper" element={<AIHelper />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AudioPlayerProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/music" element={<MusicPage />} />
+                <Route path="/reels" element={<ReelsPage />} />
+                <Route path="/temples" element={<TemplesPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/ai-helper" element={<AIHelper />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AudioPlayerProvider>
     </UserPreferencesProvider>
   </QueryClientProvider>
 );

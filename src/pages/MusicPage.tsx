@@ -1,19 +1,32 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Music, Play, Pause, Heart, Clock, TrendingUp } from 'lucide-react';
+import { Music, Play, Pause, Heart, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
+import { useAudioPlayerContext } from '@/contexts/AudioPlayerContext';
 import { getRecommendedMusic, ScoredItem, updateUserEngagement } from '@/lib/ai-recommendations';
 import { INDIAN_STATES, DEITIES } from '@/lib/constants';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { PageHeader } from '@/components/navigation/PageHeader';
+import { AudioPlayer } from '@/components/audio/AudioPlayer';
 
 export default function MusicPage() {
   const { preferences } = useUserPreferences();
+  const { 
+    currentTrack, 
+    isPlaying, 
+    currentTime, 
+    duration, 
+    isLoading: playerLoading,
+    playTrack, 
+    togglePlayPause,
+    seekPercent,
+    pause 
+  } = useAudioPlayerContext();
+  
   const [music, setMusic] = useState<ScoredItem<any>[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
 
   const stateName = INDIAN_STATES.find(s => s.value === preferences.state)?.label || 'India';
   const deityInfo = DEITIES.find(d => d.value === preferences.deity);
@@ -38,12 +51,31 @@ export default function MusicPage() {
     loadMusic();
   }, [preferences.state, preferences.language, preferences.deity, preferences.zodiacSign]);
 
-  const handlePlay = (trackId: string) => {
-    if (currentlyPlaying === trackId) {
-      setCurrentlyPlaying(null);
-    } else {
-      setCurrentlyPlaying(trackId);
-      updateUserEngagement('playedMusic', trackId);
+  const handlePlay = (item: any) => {
+    playTrack({
+      id: item.id,
+      title: item.title,
+      artist: item.artist,
+      coverUrl: item.coverUrl,
+      fileUrl: item.fileUrl,
+      duration: item.duration,
+    });
+    updateUserEngagement('playedMusic', item.id);
+  };
+
+  const handleNext = () => {
+    if (!currentTrack) return;
+    const currentIndex = music.findIndex(m => m.item.id === currentTrack.id);
+    if (currentIndex < music.length - 1) {
+      handlePlay(music[currentIndex + 1].item);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (!currentTrack) return;
+    const currentIndex = music.findIndex(m => m.item.id === currentTrack.id);
+    if (currentIndex > 0) {
+      handlePlay(music[currentIndex - 1].item);
     }
   };
 
@@ -53,8 +85,11 @@ export default function MusicPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const isTrackPlaying = (trackId: string) => currentTrack?.id === trackId && isPlaying;
+  const isCurrentTrack = (trackId: string) => currentTrack?.id === trackId;
+
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-40">
       <PageHeader 
         title="Devotional Music" 
         subtitle={`${deityInfo?.icon || '🎵'} Regional music for ${stateName}`}
@@ -114,7 +149,12 @@ export default function MusicPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="p-4 hover:shadow-soft transition-all">
+                <Card 
+                  className={`p-4 hover:shadow-soft transition-all cursor-pointer ${
+                    isCurrentTrack(item.item.id) ? 'ring-2 ring-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => handlePlay(item.item)}
+                >
                   <div className="flex items-center gap-4">
                     {/* Album Art */}
                     <div className="relative flex-shrink-0">
@@ -129,7 +169,7 @@ export default function MusicPage() {
                           <Music className="w-8 h-8 text-white" />
                         </div>
                       )}
-                      {currentlyPlaying === item.item.id && (
+                      {isTrackPlaying(item.item.id) && (
                         <motion.div
                           className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center"
                           initial={{ opacity: 0 }}
@@ -149,6 +189,15 @@ export default function MusicPage() {
                               />
                             ))}
                           </div>
+                        </motion.div>
+                      )}
+                      {isCurrentTrack(item.item.id) && playerLoading && (
+                        <motion.div
+                          className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <Loader2 className="w-6 h-6 text-white animate-spin" />
                         </motion.div>
                       )}
                     </div>
@@ -183,7 +232,7 @@ export default function MusicPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -194,13 +243,15 @@ export default function MusicPage() {
                       <Button
                         size="icon"
                         className={`rounded-full ${
-                          currentlyPlaying === item.item.id
+                          isTrackPlaying(item.item.id)
                             ? 'gradient-divine'
                             : 'gradient-saffron'
                         }`}
-                        onClick={() => handlePlay(item.item.id)}
+                        onClick={() => handlePlay(item.item)}
                       >
-                        {currentlyPlaying === item.item.id ? (
+                        {isCurrentTrack(item.item.id) && playerLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : isTrackPlaying(item.item.id) ? (
                           <Pause className="w-5 h-5" />
                         ) : (
                           <Play className="w-5 h-5 ml-0.5" />
@@ -214,6 +265,20 @@ export default function MusicPage() {
           )}
         </div>
       </main>
+
+      {/* Floating Audio Player */}
+      <AudioPlayer
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        currentTime={currentTime}
+        duration={duration}
+        isLoading={playerLoading}
+        onTogglePlayPause={togglePlayPause}
+        onSeek={seekPercent}
+        onNext={music.length > 1 ? handleNext : undefined}
+        onPrevious={music.length > 1 ? handlePrevious : undefined}
+        onClose={() => pause()}
+      />
 
       <BottomNav />
     </div>
