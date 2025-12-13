@@ -1,6 +1,7 @@
 import { useUserPreferences, UserPreferencesProvider } from '@/contexts/UserPreferencesContext';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { Home, Music, Video, MapPin, Users, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
 import { YourDayWidget } from '@/components/dashboard/YourDayWidget';
 import { ZodiacWidget } from '@/components/dashboard/ZodiacWidget';

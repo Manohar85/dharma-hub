@@ -5,6 +5,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { DEITIES, INDIAN_STATES, MOCK_MUSIC, MOCK_POSTS, MOCK_REELS, MOCK_TEMPLES } from './constants';
+import { Database } from '@/integrations/supabase/types';
+
+type IndianState = Database['public']['Enums']['indian_state'];
 
 export interface TrendingContent {
   music: Array<{ id: string; title: string; artist: string; coverUrl: string; plays: number }>;
@@ -39,29 +42,30 @@ export async function getRegionalTrending(
 
   try {
     // Try to fetch from Supabase
+    const stateTyped = state as IndianState;
     const [musicResult, postsResult, reelsResult, templesResult] = await Promise.all([
       supabase
         .from('music_tracks')
         .select('*')
-        .eq('region', state)
+        .eq('region', stateTyped)
         .order('play_count', { ascending: false })
         .limit(5),
       supabase
         .from('posts')
         .select('*')
-        .eq('region', state)
+        .eq('region', stateTyped)
         .order('likes_count', { ascending: false })
         .limit(5),
       supabase
         .from('reels')
         .select('*')
-        .eq('region', state)
+        .eq('region', stateTyped)
         .order('views_count', { ascending: false })
         .limit(5),
       supabase
         .from('temples')
         .select('*')
-        .eq('state', state)
+        .eq('state', stateTyped)
         .order('followers_count', { ascending: false })
         .limit(5)
     ]);
