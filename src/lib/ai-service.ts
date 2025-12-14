@@ -1,7 +1,9 @@
 /**
  * AI Service for generating personalized spiritual content
- * Uses OpenAI API with fallback to curated content
+ * Uses Lovable AI via edge function
  */
+
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIResponse {
   content: string;
@@ -9,7 +11,6 @@ interface AIResponse {
 }
 
 // Cache storage key prefixes
-const CACHE_PREFIX = 'dharma-ai-cache';
 const DAILY_CACHE_PREFIX = 'dharma-daily';
 const WEEKLY_CACHE_PREFIX = 'dharma-weekly';
 
@@ -29,8 +30,11 @@ export async function getDailySpiritualMessage(deity: string): Promise<string> {
     }
   }
 
-  // Generate new message
-  const message = await generateSpiritualMessage(deity);
+  // Generate new message via edge function
+  const message = await generateViaEdgeFunction(
+    `Generate a brief, uplifting spiritual message for today that connects with ${deity} devotion. Make it warm, encouraging, and meaningful.`,
+    'spiritual-message'
+  );
   
   // Cache for today
   localStorage.setItem(cacheKey, JSON.stringify({
@@ -57,8 +61,11 @@ export async function getWeeklyHoroscope(zodiacSign: string): Promise<string> {
     }
   }
 
-  // Generate new horoscope
-  const horoscope = await generateHoroscope(zodiacSign);
+  // Generate new horoscope via edge function
+  const horoscope = await generateViaEdgeFunction(
+    `Generate a weekly horoscope for ${zodiacSign} that is uplifting, spiritually oriented, and provides guidance for the week ahead. Focus on spiritual growth, relationships, and inner peace.`,
+    'horoscope'
+  );
   
   // Cache for the week
   localStorage.setItem(cacheKey, JSON.stringify({
@@ -85,8 +92,11 @@ export async function getDevotionalQuote(deity: string): Promise<string> {
     }
   }
 
-  // Generate new quote
-  const quote = await generateQuote(deity);
+  // Generate new quote via edge function
+  const quote = await generateViaEdgeFunction(
+    `Generate a beautiful, inspiring devotional quote related to ${deity} that can uplift someone's day.`,
+    'quote'
+  );
   
   // Cache for today
   localStorage.setItem(cacheKey, JSON.stringify({
@@ -98,277 +108,96 @@ export async function getDevotionalQuote(deity: string): Promise<string> {
 }
 
 /**
- * Generate spiritual message using AI or curated content
+ * Get daily Bhagavad Gita sloka with translation
  */
-async function generateSpiritualMessage(deity: string): Promise<string> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+export async function getDailyBhagavadGitaSloka(language: string = 'english'): Promise<{
+  chapter: number;
+  verse: number;
+  sanskrit: string;
+  transliteration: string;
+  translation: string;
+  meaning: string;
+}> {
+  const cacheKey = `${DAILY_CACHE_PREFIX}-gita-sloka-${language}`;
+  const today = new Date().toDateString();
   
-  if (apiKey) {
+  // Check cache
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a spiritual guide providing daily devotional messages. Keep responses under 150 words, inspiring and personalized for devotees of ${deity}.`
-            },
-            {
-              role: 'user',
-              content: `Generate a brief, uplifting spiritual message for today that connects with ${deity} devotion. Make it warm, encouraging, and meaningful.`
-            }
-          ],
-          max_tokens: 200,
-          temperature: 0.8
-        })
-      });
-
-      const data = await response.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        return data.choices[0].message.content.trim();
+      const data = JSON.parse(cached);
+      if (new Date(data.timestamp).toDateString() === today) {
+        return data.sloka;
       }
-    } catch (error) {
-      console.warn('OpenAI API error, using fallback:', error);
+    } catch {
+      localStorage.removeItem(cacheKey);
     }
   }
 
-  // Fallback to curated messages
-  return getCuratedSpiritualMessage(deity);
-}
+  // Get a deterministic sloka for today
+  const dayOfYear = getDayOfYear(new Date());
+  const slokaIndex = dayOfYear % BHAGAVAD_GITA_SLOKAS.length;
+  const baseSloka = BHAGAVAD_GITA_SLOKAS[slokaIndex];
 
-/**
- * Generate horoscope using AI or curated content
- */
-async function generateHoroscope(zodiacSign: string): Promise<string> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  // Get translation in requested language
+  const translation = getTranslation(baseSloka, language);
   
-  if (apiKey) {
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an astrologer providing weekly horoscopes. Keep responses under 200 words, positive and spiritual.`
-            },
-            {
-              role: 'user',
-              content: `Generate a weekly horoscope for ${zodiacSign} that is uplifting, spiritually oriented, and provides guidance for the week ahead. Focus on spiritual growth, relationships, and inner peace.`
-            }
-          ],
-          max_tokens: 250,
-          temperature: 0.8
-        })
-      });
-
-      const data = await response.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        return data.choices[0].message.content.trim();
-      }
-    } catch (error) {
-      console.warn('OpenAI API error, using fallback:', error);
-    }
-  }
-
-  // Fallback to curated horoscopes
-  return getCuratedHoroscope(zodiacSign);
-}
-
-/**
- * Generate quote using AI or curated content
- */
-async function generateQuote(deity: string): Promise<string> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const sloka = {
+    chapter: baseSloka.chapter,
+    verse: baseSloka.verse,
+    sanskrit: baseSloka.sanskrit,
+    transliteration: baseSloka.transliteration,
+    translation: translation.translation,
+    meaning: translation.meaning
+  };
   
-  if (apiKey) {
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `You are providing devotional quotes. Keep responses as a single inspiring quote under 100 words related to ${deity}.`
-            },
-            {
-              role: 'user',
-              content: `Generate a beautiful, inspiring devotional quote related to ${deity} that can uplift someone's day.`
-            }
-          ],
-          max_tokens: 120,
-          temperature: 0.8
-        })
-      });
+  // Cache for today
+  localStorage.setItem(cacheKey, JSON.stringify({
+    sloka,
+    timestamp: Date.now()
+  }));
 
-      const data = await response.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        return data.choices[0].message.content.trim();
+  return sloka;
+}
+
+/**
+ * Generate content via edge function
+ */
+async function generateViaEdgeFunction(prompt: string, type: string): Promise<string> {
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-chat', {
+      body: {
+        messages: [{ role: 'user', content: prompt }],
+        type
       }
-    } catch (error) {
-      console.warn('OpenAI API error, using fallback:', error);
+    });
+
+    if (error) {
+      console.error('AI edge function error:', error);
+      return getFallbackContent(type);
     }
+
+    return data?.content || getFallbackContent(type);
+  } catch (error) {
+    console.error('AI request failed:', error);
+    return getFallbackContent(type);
   }
-
-  // Fallback to curated quotes
-  return getCuratedQuote(deity);
 }
 
 /**
- * Curated spiritual messages fallback
+ * Fallback content when AI is unavailable
  */
-function getCuratedSpiritualMessage(deity: string): string {
-  const messages: Record<string, string[]> = {
-    shiva: [
-      "Om Namah Shivaya. Today, let Lord Shiva's infinite compassion guide you. Embrace transformation and let go of what no longer serves your highest good. His divine consciousness flows through you, bringing peace and clarity.",
-      "On this blessed day, remember that Shiva is both the destroyer of ignorance and the protector of devotees. Meditate on his grace and find strength in your spiritual practice.",
-      "As the lord of meditation, Shiva teaches us the power of stillness. Take a moment today to connect with your inner self and feel his divine presence within."
-    ],
-    krishna: [
-      "Radhe Krishna! Today, let Lord Krishna's playful wisdom inspire you. He teaches us that devotion, love, and joy are the paths to the divine. Dance through your day with a light heart.",
-      "Krishna's flute calls you to embrace life's melody. Today, find beauty in small moments and let love guide your actions. His divine presence is always with you.",
-      "Remember Krishna's teachings: perform your duties without attachment, and trust in the divine plan. Today, let go of worry and embrace faith."
-    ],
-    vishnu: [
-      "Om Namo Bhagavate Vasudevaya. Lord Vishnu, the preserver, protects all who seek him. Today, feel his divine protection and move forward with confidence in your spiritual journey.",
-      "Vishnu's cosmic form reminds us of the infinite nature of the divine. On this day, expand your consciousness and see the sacred in all things.",
-      "As the protector of dharma, Vishnu guides us toward righteousness. Let your actions today reflect truth, compassion, and divine wisdom."
-    ],
-    ganesh: [
-      "Ganapati Bappa Morya! Lord Ganesha, remover of obstacles, blesses your path today. Approach challenges with wisdom and trust that all barriers will dissolve.",
-      "Ganesha's elephant head symbolizes wisdom and strength. Today, use your intelligence to overcome difficulties and his divine grace to find solutions.",
-      "The remover of obstacles watches over you. Today, trust in Ganesha's blessings and move forward fearlessly. Every challenge is an opportunity for growth."
-    ],
-    durga: [
-      "Jai Mata Di! Goddess Durga's fierce compassion protects you today. Channel her strength to overcome inner and outer challenges with grace and determination.",
-      "As the divine mother, Durga nurtures and protects. Today, feel her loving embrace and draw strength from her infinite power to face any adversity.",
-      "Durga teaches us that true power comes from within. Today, connect with your inner strength and let her divine energy flow through you."
-    ],
-    lakshmi: [
-      "Om Shreem Mahalakshmiyei Namaha. Goddess Lakshmi brings abundance in all forms today. Open your heart to receive her blessings of prosperity, wisdom, and inner wealth.",
-      "Lakshmi's grace flows where there is gratitude. Today, count your blessings and let her divine abundance manifest in your life through positive actions.",
-      "The goddess of wealth and prosperity reminds us that true abundance comes from within. Today, nurture your inner richness and share your blessings with others."
-    ],
-    other: [
-      "On this sacred day, the divine light within you shines brightly. Trust in the cosmic plan and move forward with faith, love, and devotion.",
-      "The universe conspires to support your highest good. Today, align with your purpose and let divine grace guide every step you take.",
-      "In the silence of your heart, the divine speaks. Take a moment today to listen, to feel, and to connect with the infinite love that surrounds you."
-    ]
-  };
-
-  const deityMessages = messages[deity] || messages.other;
-  return deityMessages[Math.floor(Math.random() * deityMessages.length)];
-}
-
-/**
- * Curated horoscope fallback
- */
-function getCuratedHoroscope(zodiacSign: string): string {
-  const horoscopes: Record<string, string[]> = {
-    leo: [
-      "This week, your natural leadership shines brightly. The cosmic energies align to bring opportunities for creative expression and spiritual growth. Trust your intuition and take bold steps toward your goals. Your radiant energy will inspire those around you.",
-      "The lion's courage guides you this week. Expect positive changes in your relationships and career. Focus on balancing your passionate nature with patience. Spiritual practices will bring deep inner peace.",
-      "Leo, this week favors self-expression and personal growth. Your confidence attracts opportunities. Stay grounded while reaching for the stars. Meditation and devotion will enhance your natural magnetism."
-    ],
-    aries: [
-      "This week brings fresh energy and new beginnings. Your pioneering spirit leads you to exciting opportunities. Channel your dynamic energy into spiritual practices for maximum benefit.",
-      "Aries, this week is about taking initiative. The stars support your bold moves. Balance action with reflection, and your path will become clear. Trust your instincts."
-    ],
-    taurus: [
-      "This week focuses on stability and grounding. Your steady nature serves you well. Be open to subtle changes that bring long-term happiness. Patience rewards you now."
-    ],
-    gemini: [
-      "This week brings communication and learning opportunities. Your curious mind discovers new spiritual insights. Balance multiple interests while staying focused on your highest goals."
-    ],
-    cancer: [
-      "This week emphasizes emotional depth and intuition. Your nurturing nature serves others and yourself. Protect your energy while sharing your compassionate heart with the world."
-    ],
-    virgo: [
-      "This week supports organization and service. Your attention to detail helps manifest your spiritual goals. Balance perfectionism with acceptance, and find peace in the present moment."
-    ],
-    libra: [
-      "This week focuses on harmony and relationships. Your diplomatic nature brings peace to challenging situations. Find balance between giving and receiving, and honor your own needs."
-    ],
-    scorpio: [
-      "This week brings transformation and deep insights. Your intensity serves your spiritual growth. Embrace change and let go of what no longer serves your highest purpose."
-    ],
-    sagittarius: [
-      "This week expands your horizons through learning and travel. Your adventurous spirit leads to spiritual discoveries. Stay optimistic while remaining grounded in practical matters."
-    ],
-    capricorn: [
-      "This week supports your ambitions and long-term goals. Your disciplined approach brings success. Balance work with spiritual practice for optimal fulfillment and inner peace."
-    ],
-    aquarius: [
-      "This week emphasizes innovation and humanitarian causes. Your unique perspective brings fresh solutions. Connect with like-minded souls and let your visionary spirit shine."
-    ],
-    pisces: [
-      "This week enhances your intuition and creativity. Your compassionate nature serves others beautifully. Balance dreaminess with action, and trust your spiritual insights."
-    ]
-  };
-
-  const signHoroscopes = horoscopes[zodiacSign] || horoscopes.leo;
-  return signHoroscopes[Math.floor(Math.random() * signHoroscopes.length)];
-}
-
-/**
- * Curated quotes fallback
- */
-function getCuratedQuote(deity: string): string {
-  const quotes: Record<string, string[]> = {
-    shiva: [
-      "Om Namah Shivaya - In Shiva's consciousness, we find the dissolution of all limitations and the embrace of infinite possibility.",
-      "Shiva teaches us: 'Let go of attachment, and you will discover the freedom of the soul.'",
-      "In meditation, Shiva reveals the truth that all separation is illusion - we are one with the divine."
-    ],
-    krishna: [
-      "Krishna says: 'Do your work without attachment, and you will find true peace.'",
-      "In the Bhagavad Gita, Krishna teaches: 'You have the right to work, but never to the fruit of work.'",
-      "Radhe Krishna! Love is the highest form of devotion, and Krishna's love knows no bounds."
-    ],
-    vishnu: [
-      "Vishnu protects those who walk the path of dharma with faith and devotion.",
-      "In Vishnu's cosmic vision, all beings are connected in the web of divine love.",
-      "Vishnu reminds us: 'Preserve truth, protect the righteous, and serve with compassion.'"
-    ],
-    ganesh: [
-      "Ganapati Bappa Morya! Ganesha removes all obstacles when we approach with wisdom and humility.",
-      "Ganesha teaches: 'Every challenge is a blessing in disguise, leading to greater understanding.'",
-      "With Ganesha's grace, no obstacle is too great, no path too difficult to traverse."
-    ],
-    durga: [
-      "Jai Mata Di! Durga's strength lies not in destruction, but in the protection of all that is sacred.",
-      "Durga teaches: 'True power comes from within, from the divine source that never wavers.'",
-      "As the divine mother, Durga nurtures, protects, and empowers all her children."
-    ],
-    lakshmi: [
-      "Lakshmi blesses those who live with gratitude, generosity, and devotion to truth.",
-      "True wealth flows from inner abundance, and Lakshmi's grace multiplies our blessings.",
-      "Lakshmi teaches: 'Prosperity follows those who serve others with a pure heart.'"
-    ],
-    other: [
-      "The divine dwells within each of us - recognize it, honor it, and let it shine.",
-      "In devotion, we find the bridge between the finite and the infinite.",
-      "Every moment is an opportunity to connect with the divine presence that surrounds and fills us."
-    ]
-  };
-
-  const deityQuotes = quotes[deity] || quotes.other;
-  return deityQuotes[Math.floor(Math.random() * deityQuotes.length)];
+function getFallbackContent(type: string): string {
+  switch (type) {
+    case 'spiritual-message':
+      return "The divine presence is always with you, guiding and protecting your path. Trust in the cosmic plan and move forward with faith. 🙏";
+    case 'horoscope':
+      return "This week brings opportunities for spiritual growth. Trust your intuition and embrace the positive changes coming your way. Focus on inner peace and gratitude.";
+    case 'quote':
+      return "In devotion, we find the bridge between the finite and the infinite. The divine dwells within each of us. 🕉️";
+    default:
+      return "May divine blessings be with you always. 🙏";
+  }
 }
 
 /**
@@ -377,9 +206,212 @@ function getCuratedQuote(deity: string): string {
 function getWeekStart(): Date {
   const now = new Date();
   const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(now.setDate(diff));
 }
+
+/**
+ * Get day of year (1-365)
+ */
+function getDayOfYear(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - start.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+}
+
+/**
+ * Get translation for a sloka in the requested language
+ */
+function getTranslation(sloka: typeof BHAGAVAD_GITA_SLOKAS[0], language: string): {
+  translation: string;
+  meaning: string;
+} {
+  switch (language.toLowerCase()) {
+    case 'telugu':
+      return sloka.translations.telugu;
+    case 'hindi':
+      return sloka.translations.hindi;
+    case 'sanskrit':
+      return sloka.translations.sanskrit;
+    default:
+      return sloka.translations.english;
+  }
+}
+
+/**
+ * Curated Bhagavad Gita slokas with translations
+ */
+const BHAGAVAD_GITA_SLOKAS = [
+  {
+    chapter: 2,
+    verse: 47,
+    sanskrit: "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन। मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥",
+    transliteration: "karmaṇy evādhikāras te mā phaleṣu kadācana mā karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi",
+    translations: {
+      english: {
+        translation: "You have the right to perform your prescribed duties, but you are not entitled to the fruits of your actions.",
+        meaning: "Focus on your actions without attachment to results. This is the essence of Karma Yoga."
+      },
+      hindi: {
+        translation: "कर्म करने में तुम्हारा अधिकार है, फल में कभी नहीं।",
+        meaning: "बिना फल की चिंता किए कर्म करते रहो। यही कर्म योग का सार है।"
+      },
+      telugu: {
+        translation: "కర్మ చేయడంలో నీకు అధికారం ఉంది, ఫలంలో ఎప్పుడూ లేదు.",
+        meaning: "ఫలితం గురించి చింతించకుండా కర్మ చేయండి. ఇదే కర్మ యోగం యొక్క సారాంశం."
+      },
+      sanskrit: {
+        translation: "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।",
+        meaning: "कर्मयोगस्य सारोऽयम् - फलासक्तिं विना कर्म कुरु।"
+      }
+    }
+  },
+  {
+    chapter: 2,
+    verse: 14,
+    sanskrit: "मात्रास्पर्शास्तु कौन्तेय शीतोष्णसुखदुःखदाः। आगमापायिनोऽनित्यास्तांस्तितिक्षस्व भारत॥",
+    transliteration: "mātrā-sparśās tu kaunteya śītoṣṇa-sukha-duḥkha-dāḥ āgamāpāyino 'nityās tāṁs titikṣasva bhārata",
+    translations: {
+      english: {
+        translation: "The contact of senses with their objects gives rise to feelings of cold, heat, pleasure and pain. They come and go, being impermanent. Bear them patiently.",
+        meaning: "All experiences are temporary. Learn to remain equanimous through life's ups and downs."
+      },
+      hindi: {
+        translation: "इंद्रियों का विषयों से संपर्क सर्दी-गर्मी, सुख-दुख देता है। ये आते-जाते हैं। इन्हें सहन करो।",
+        meaning: "सभी अनुभव अस्थायी हैं। जीवन के उतार-चढ़ाव में समभाव रखना सीखो।"
+      },
+      telugu: {
+        translation: "ఇంద్రియాలు వస్తువులతో సంపర్కం చలి-వేడి, సుఖ-దుఃఖాలను ఇస్తుంది. వారు వస్తారు, పోతారు. వాటిని సహించు.",
+        meaning: "అన్ని అనుభవాలు తాత్కాలికం. జీవితంలో సమతుల్యత నేర్చుకోండి."
+      },
+      sanskrit: {
+        translation: "मात्रास्पर्शास्तु कौन्तेय शीतोष्णसुखदुःखदाः।",
+        meaning: "सर्वाणि अनुभवानि अनित्यानि। समत्वं शिक्षस्व।"
+      }
+    }
+  },
+  {
+    chapter: 4,
+    verse: 7,
+    sanskrit: "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत। अभ्युत्थानमधर्मस्य तदात्मानं सृजाम्यहम्॥",
+    transliteration: "yadā yadā hi dharmasya glānir bhavati bhārata abhyutthānam adharmasya tadātmānaṁ sṛjāmy aham",
+    translations: {
+      english: {
+        translation: "Whenever there is a decline in righteousness and an increase in unrighteousness, I manifest Myself.",
+        meaning: "The Divine protects dharma in every age. Have faith that righteousness will always prevail."
+      },
+      hindi: {
+        translation: "जब-जब धर्म की हानि और अधर्म की वृद्धि होती है, तब-तब मैं स्वयं को प्रकट करता हूँ।",
+        meaning: "भगवान हर युग में धर्म की रक्षा करते हैं। विश्वास रखो कि सत्य की जीत होगी।"
+      },
+      telugu: {
+        translation: "ధర్మానికి హాని, అధర్మానికి వృద్ధి జరిగినప్పుడు, నేను నన్ను ప్రకటించుకుంటాను.",
+        meaning: "భగవంతుడు ప్రతి యుగంలో ధర్మాన్ని రక్షిస్తాడు. న్యాయం గెలుస్తుందని నమ్మండి."
+      },
+      sanskrit: {
+        translation: "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत।",
+        meaning: "भगवान् धर्मं रक्षति सर्वदा। श्रद्धां धारय।"
+      }
+    }
+  },
+  {
+    chapter: 6,
+    verse: 5,
+    sanskrit: "उद्धरेदात्मनात्मानं नात्मानमवसादयेत्। आत्मैव ह्यात्मनो बन्धुरात्मैव रिपुरात्मनः॥",
+    transliteration: "uddhared ātmanātmānaṁ nātmānam avasādayet ātmaiva hy ātmano bandhur ātmaiva ripur ātmanaḥ",
+    translations: {
+      english: {
+        translation: "One must elevate oneself by one's own mind, not degrade oneself. The mind can be the friend or the enemy of the self.",
+        meaning: "You have the power to uplift or bring yourself down. Choose thoughts that elevate your spirit."
+      },
+      hindi: {
+        translation: "अपने मन से स्वयं को ऊपर उठाओ, गिराओ नहीं। मन ही आत्मा का मित्र है और मन ही शत्रु।",
+        meaning: "तुम्हारे पास खुद को ऊपर उठाने या गिराने की शक्ति है। ऐसे विचार चुनो जो आत्मा को ऊंचा करें।"
+      },
+      telugu: {
+        translation: "తన మనస్సుతో తనను తాను ఉద్ధరించుకోవాలి, పతనం చెందకూడదు. మనస్సే స్నేహితుడు, మనస్సే శత్రువు.",
+        meaning: "మిమ్మల్ని మీరు ఎదగడానికి లేదా పడిపోవడానికి శక్తి మీ దగ్గరే ఉంది. ఆత్మను ఉన్నతం చేసే ఆలోచనలు ఎంచుకోండి."
+      },
+      sanskrit: {
+        translation: "उद्धरेदात्मनात्मानं नात्मानमवसादयेत्।",
+        meaning: "स्वस्य उन्नतये वा पतनाय शक्तिः त्वय्येव। सद्विचारान् चिनुहि।"
+      }
+    }
+  },
+  {
+    chapter: 9,
+    verse: 22,
+    sanskrit: "अनन्याश्चिन्तयन्तो मां ये जनाः पर्युपासते। तेषां नित्याभियुक्तानां योगक्षेमं वहाम्यहम्॥",
+    transliteration: "ananyāś cintayanto māṁ ye janāḥ paryupāsate teṣāṁ nityābhiyuktānāṁ yoga-kṣemaṁ vahāmy aham",
+    translations: {
+      english: {
+        translation: "Those who worship Me with exclusive devotion, meditating on Me without any other thought – to them I carry what they lack and preserve what they have.",
+        meaning: "Complete surrender to the Divine brings total protection and provision. Trust in divine care."
+      },
+      hindi: {
+        translation: "जो अनन्य भक्ति से मेरा चिंतन करते हुए मेरी उपासना करते हैं, उनका योगक्षेम मैं वहन करता हूँ।",
+        meaning: "पूर्ण समर्पण से दैवी सुरक्षा और प्रदान मिलता है। ईश्वर पर विश्वास रखो।"
+      },
+      telugu: {
+        translation: "అనన్య భక్తితో నన్ను ధ్యానిస్తూ ఆరాధించే వారి యోగక్షేమం నేను భరిస్తాను.",
+        meaning: "పూర్తి శరణాగతితో దైవ రక్షణ మరియు అందుకుంటారు. దైవంపై నమ్మకం ఉంచండి."
+      },
+      sanskrit: {
+        translation: "अनन्याश्चिन्तयन्तो मां ये जनाः पर्युपासते।",
+        meaning: "पूर्णशरणागत्या दैवी रक्षा प्राप्यते। ईश्वरे विश्वसिहि।"
+      }
+    }
+  },
+  {
+    chapter: 18,
+    verse: 66,
+    sanskrit: "सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज। अहं त्वां सर्वपापेभ्यो मोक्षयिष्यामि मा शुचः॥",
+    transliteration: "sarva-dharmān parityajya mām ekaṁ śaraṇaṁ vraja ahaṁ tvāṁ sarva-pāpebhyo mokṣayiṣyāmi mā śucaḥ",
+    translations: {
+      english: {
+        translation: "Abandon all varieties of dharma and surrender unto Me alone. I shall deliver you from all sinful reactions; do not grieve.",
+        meaning: "Complete surrender to the Divine is the ultimate path. Let go of all worries and trust in divine grace."
+      },
+      hindi: {
+        translation: "सभी धर्मों को त्यागकर केवल मेरी शरण में आ जाओ। मैं तुम्हें सब पापों से मुक्त करूंगा, शोक मत करो।",
+        meaning: "ईश्वर के प्रति पूर्ण समर्पण ही परम मार्ग है। सभी चिंताएं छोड़ो और दैवी कृपा पर विश्वास रखो।"
+      },
+      telugu: {
+        translation: "అన్ని ధర్మాలను వదిలి నా శరణు మాత్రమే రా. నేను నిన్ను అన్ని పాపాల నుండి విముక్తి చేస్తాను, దుఃఖించకు.",
+        meaning: "దైవానికి పూర్తి శరణాగతి అంతిమ మార్గం. అన్ని ఆందోళనలు వదిలి దైవ కృపను నమ్ముకోండి."
+      },
+      sanskrit: {
+        translation: "सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज।",
+        meaning: "पूर्णशरणागतिः परमो मार्गः। सर्वाः चिन्ताः त्यज दैवीकृपायां विश्वसिहि।"
+      }
+    }
+  },
+  {
+    chapter: 12,
+    verse: 13,
+    sanskrit: "अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च। निर्ममो निरहङ्कारः समदुःखसुखः क्षमी॥",
+    transliteration: "adveṣṭā sarva-bhūtānāṁ maitraḥ karuṇa eva ca nirmamo nirahaṅkāraḥ sama-duḥkha-sukhaḥ kṣamī",
+    translations: {
+      english: {
+        translation: "One who is free from enmity towards all beings, friendly and compassionate, without possessiveness and ego, equal in pleasure and pain, and forgiving.",
+        meaning: "These are the qualities of a true devotee. Cultivate compassion and equanimity in your heart."
+      },
+      hindi: {
+        translation: "जो सभी प्राणियों से द्वेष नहीं रखता, मित्रवत और करुणामय है, अहंकार रहित है, सुख-दुख में समान और क्षमाशील है।",
+        meaning: "ये सच्चे भक्त के गुण हैं। अपने हृदय में करुणा और समता विकसित करो।"
+      },
+      telugu: {
+        translation: "అన్ని ప్రాణులపై ద్వేషం లేని, స్నేహపూర్వక మరియు కరుణామయుడు, అహంకారం లేని, సుఖ-దుఃఖాలలో సమానంగా, క్షమాశీలుడు.",
+        meaning: "ఇవి నిజమైన భక్తుని లక్షణాలు. మీ హృదయంలో కరుణ మరియు సమత్వం పెంచుకోండి."
+      },
+      sanskrit: {
+        translation: "अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च।",
+        meaning: "एते सद्भक्तस्य गुणाः। करुणां समतां च हृदये पोषय।"
+      }
+    }
+  }
+];
 
 /**
  * Clear old cache entries
@@ -388,11 +420,10 @@ export function clearOldCache(): void {
   const today = new Date().toDateString();
   const weekStart = getWeekStart().toDateString();
   
-  // Clear old daily cache
   Object.keys(localStorage).forEach(key => {
     if (key.startsWith(DAILY_CACHE_PREFIX)) {
       try {
-        const data: AIResponse = JSON.parse(localStorage.getItem(key) || '{}');
+        const data = JSON.parse(localStorage.getItem(key) || '{}');
         if (new Date(data.timestamp).toDateString() !== today) {
           localStorage.removeItem(key);
         }
@@ -401,10 +432,9 @@ export function clearOldCache(): void {
       }
     }
     
-    // Clear old weekly cache
     if (key.startsWith(WEEKLY_CACHE_PREFIX)) {
       try {
-        const data: AIResponse = JSON.parse(localStorage.getItem(key) || '{}');
+        const data = JSON.parse(localStorage.getItem(key) || '{}');
         if (new Date(data.timestamp).toDateString() !== weekStart) {
           localStorage.removeItem(key);
         }
