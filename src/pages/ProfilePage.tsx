@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Settings, Heart, Music, Video, MapPin, LogOut, Edit2, Bell, Moon, Globe } from 'lucide-react';
+import { Settings, Heart, Music, Video, MapPin, LogOut, Edit2, Bell, Moon, Globe, Plus, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -7,8 +8,10 @@ import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { PageHeader } from '@/components/navigation/PageHeader';
-
+import { AddContentModal } from '@/components/profile/AddContentModal';
 export default function ProfilePage() {
+  const [showAddMusic, setShowAddMusic] = useState(false);
+  const [showAddPost, setShowAddPost] = useState(false);
   const { preferences, resetPreferences } = useUserPreferences();
 
   const stateName = INDIAN_STATES.find(s => s.value === preferences.state)?.label || 'India';
@@ -48,6 +51,30 @@ export default function ProfilePage() {
               </div>
             </div>
           </Card>
+        </motion.div>
+
+        {/* Add Content Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 gap-4"
+        >
+          <Button
+            onClick={() => setShowAddMusic(true)}
+            className="h-14 gradient-saffron shadow-warm"
+          >
+            <Music className="w-5 h-5 mr-2" />
+            Add Music
+          </Button>
+          <Button
+            onClick={() => setShowAddPost(true)}
+            variant="outline"
+            className="h-14 border-primary hover:bg-primary/10"
+          >
+            <FileText className="w-5 h-5 mr-2" />
+            Add Post
+          </Button>
         </motion.div>
 
         {/* Preferences Overview */}
@@ -186,6 +213,18 @@ export default function ProfilePage() {
       </main>
 
       <BottomNav />
+
+      {/* Modals */}
+      <AddContentModal
+        type="music"
+        isOpen={showAddMusic}
+        onClose={() => setShowAddMusic(false)}
+      />
+      <AddContentModal
+        type="post"
+        isOpen={showAddPost}
+        onClose={() => setShowAddPost(false)}
+      />
     </div>
   );
 }

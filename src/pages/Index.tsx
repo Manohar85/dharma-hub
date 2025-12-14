@@ -1,6 +1,6 @@
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { Home, Music, Video, MapPin, Users } from 'lucide-react';
+import { Music, Video, MapPin, Users, Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
 import { YourDayWidget } from '@/components/dashboard/YourDayWidget';
@@ -14,9 +14,9 @@ import { TempleOfDayWidget } from '@/components/dashboard/TempleOfDayWidget';
 import { PanchangamWidget } from '@/components/dashboard/PanchangamWidget';
 import { AIChatbot } from '@/components/ai-assistant/AIChatbot';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { SearchBar } from '@/components/search/SearchBar';
 import { useBackgroundRefresh } from '@/hooks/useBackgroundRefresh';
 import { useState } from 'react';
-import { Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -41,14 +41,17 @@ function MainApp() {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <header className="sticky top-0 z-40 glass-warm border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-gradient-divine">Bhakti</h1>
-            <p className="text-xs text-muted-foreground">Welcome back, {preferences.name}</p>
+        <div className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-display font-bold text-gradient-divine">Bhakti</h1>
+              <p className="text-xs text-muted-foreground">Welcome back, {preferences.name}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl animate-float">{deityInfo?.icon || '🕉️'}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl animate-float">{deityInfo?.icon || '🕉️'}</span>
-          </div>
+          <SearchBar />
         </div>
       </header>
 
@@ -66,7 +69,7 @@ function MainApp() {
             <HoroscopeWidget zodiacSign={preferences.zodiacSign} />
           </div>
 
-          <DivineMessageWidget deity={preferences.deity} />
+          <DivineMessageWidget />
           
           {/* AI-Powered Recommendations */}
           <DailyBhajanWidget
