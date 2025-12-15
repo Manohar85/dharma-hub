@@ -1,75 +1,156 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { X, Play, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import './MeditationPage.css';
+
+// Meditation phases with durations in seconds
+const PHASES = [
+  { name: 'Body Relaxation', duration: 60, hasAudio: false, guidance: 'Relax your body... let go of tension...' },
+  { name: 'Breath Awareness', duration: 180, hasAudio: false, guidance: 'Focus on your breath... inhale... exhale...' },
+  { name: 'OM Resonance', duration: 300, hasAudio: true, guidance: 'Let the sacred OM vibrate within you...' },
+  { name: 'Silence', duration: 180, hasAudio: false, guidance: 'Rest in stillness... pure awareness...' },
+];
+
+const TOTAL_DURATION = PHASES.reduce((acc, phase) => acc + phase.duration, 0); // 12 minutes
 
 const MeditationPage = () => {
   const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [duration, setDuration] = useState(12); // 12 minutes default
-  const [timeRemaining, setTimeRemaining] = useState(duration * 60);
+  const [timeRemaining, setTimeRemaining] = useState(TOTAL_DURATION);
+  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
+  const [phaseTimeRemaining, setPhaseTimeRemaining] = useState(PHASES[0].duration);
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Calculate current phase based on elapsed time
+  const calculatePhase = useCallback((totalRemaining: number) => {
+    let elapsed = TOTAL_DURATION - totalRemaining;
+    let phaseIndex = 0;
+    let phaseRemaining = 0;
+
+    for (let i = 0; i < PHASES.length; i++) {
+      if (elapsed < PHASES[i].duration) {
+        phaseIndex = i;
+        phaseRemaining = PHASES[i].duration - elapsed;
+        break;
+      }
+      elapsed -= PHASES[i].duration;
+      if (i === PHASES.length - 1) {
+        phaseIndex = PHASES.length - 1;
+        phaseRemaining = 0;
+      }
+    }
+
+    return { phaseIndex, phaseRemaining };
+  }, []);
+
+  // Initialize audio
   useEffect(() => {
-    // Create audio element
     audioRef.current = new Audio('/audio/om.mp3');
     audioRef.current.loop = true;
-    audioRef.current.volume = 0.6;
+    audioRef.current.volume = 0;
 
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
     };
   }, []);
 
+  // Fade audio in/out
+  const fadeAudio = useCallback((fadeIn: boolean, duration: number = 2000) => {
+    if (!audioRef.current) return;
+
+    const targetVolume = fadeIn ? 0.6 : 0;
+    const startVolume = audioRef.current.volume;
+    const volumeDiff = targetVolume - startVolume;
+    const steps = 20;
+    const stepDuration = duration / steps;
+    let currentStep = 0;
+
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+
+    if (fadeIn && audioRef.current.paused) {
+      audioRef.current.play().catch(console.error);
+    }
+
+    fadeIntervalRef.current = setInterval(() => {
+      currentStep++;
+      if (audioRef.current) {
+        audioRef.current.volume = Math.max(0, Math.min(1, startVolume + (volumeDiff * currentStep / steps)));
+      }
+      
+      if (currentStep >= steps) {
+        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+        if (!fadeIn && audioRef.current) {
+          audioRef.current.pause();
+        }
+      }
+    }, stepDuration);
+  }, []);
+
+  // Timer effect
   useEffect(() => {
     if (isPlaying && timeRemaining > 0) {
       timerRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
-          if (prev <= 1) {
+          const newTime = prev - 1;
+          if (newTime <= 0) {
             handleStop();
             return 0;
           }
-          return prev - 1;
+
+          const { phaseIndex, phaseRemaining } = calculatePhase(newTime);
+          
+          // Check for phase transition
+          if (phaseIndex !== currentPhaseIndex) {
+            const currentPhase = PHASES[phaseIndex];
+            const prevPhase = PHASES[currentPhaseIndex];
+
+            // Handle audio transitions
+            if (currentPhase.hasAudio && !prevPhase.hasAudio) {
+              fadeAudio(true);
+            } else if (!currentPhase.hasAudio && prevPhase.hasAudio) {
+              fadeAudio(false);
+            }
+
+            setCurrentPhaseIndex(phaseIndex);
+          }
+          
+          setPhaseTimeRemaining(phaseRemaining);
+          return newTime;
         });
       }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
     }
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, timeRemaining]);
+  }, [isPlaying, currentPhaseIndex, calculatePhase, fadeAudio]);
 
   const handleStart = () => {
     setIsPlaying(true);
-    setTimeRemaining(duration * 60);
-    if (audioRef.current) {
-      audioRef.current.play().catch(console.error);
-    }
+    setTimeRemaining(TOTAL_DURATION);
+    setCurrentPhaseIndex(0);
+    setPhaseTimeRemaining(PHASES[0].duration);
+    // First phase has no audio, audio starts at OM Resonance phase
   };
 
   const handleStop = () => {
     setIsPlaying(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
+    fadeAudio(false, 1000);
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimeRemaining(TOTAL_DURATION);
+    setCurrentPhaseIndex(0);
+    setPhaseTimeRemaining(PHASES[0].duration);
   };
 
   const toggleMute = () => {
@@ -90,9 +171,11 @@ const MeditationPage = () => {
     navigate(-1);
   };
 
+  const currentPhase = PHASES[currentPhaseIndex];
+  const progress = ((TOTAL_DURATION - timeRemaining) / TOTAL_DURATION) * 100;
+
   return (
     <div className="meditation-screen">
-      {/* Background gradient overlay */}
       <div className="meditation-bg-overlay" />
 
       {/* Exit button */}
@@ -114,12 +197,12 @@ const MeditationPage = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <div className={`om-glow ${isPlaying ? 'active' : ''}`} />
+          <div className={`om-glow ${isPlaying && currentPhase.hasAudio ? 'active' : ''}`} />
           <span className="om-symbol">ॐ</span>
         </motion.div>
 
-        {/* Timer display */}
-        <AnimatePresence>
+        {/* Phase indicator and timer */}
+        <AnimatePresence mode="wait">
           {isPlaying && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -127,22 +210,26 @@ const MeditationPage = () => {
               exit={{ opacity: 0, y: -20 }}
               className="meditation-timer"
             >
+              <p className="phase-name">{currentPhase.name}</p>
               <p className="timer-text">{formatTime(timeRemaining)}</p>
-              <p className="timer-label">remaining</p>
+              
+              {/* Progress bar */}
+              <div className="progress-container">
+                <div className="progress-bar" style={{ width: `${progress}%` }} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Guidance text */}
         <motion.p
+          key={isPlaying ? currentPhaseIndex : 'idle'}
           className="meditation-guidance"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ duration: 0.5 }}
         >
-          {isPlaying
-            ? "Let the sound OM resonate softly within… allow the vibration to settle the mind…"
-            : "Close your eyes. Breathe deeply. Let the sacred OM guide you to inner peace."}
+          {isPlaying ? currentPhase.guidance : 'Close your eyes. Breathe deeply. Begin your journey to inner peace.'}
         </motion.p>
 
         {/* Controls */}
@@ -153,19 +240,8 @@ const MeditationPage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="control-buttons"
             >
-              {/* Duration selector */}
-              <div className="duration-selector">
-                {[5, 12, 20].map((mins) => (
-                  <button
-                    key={mins}
-                    onClick={() => setDuration(mins)}
-                    className={`duration-btn ${duration === mins ? 'active' : ''}`}
-                  >
-                    {mins} min
-                  </button>
-                ))}
-              </div>
-
+              <p className="duration-info">12 minute guided session</p>
+              
               <Button
                 onClick={handleStart}
                 className="start-btn gradient-divine"
@@ -197,11 +273,10 @@ const MeditationPage = () => {
 
                 <Button
                   onClick={handleStop}
-                  variant="destructive"
+                  variant="outline"
                   size="lg"
                   className="stop-btn"
                 >
-                  <Pause className="w-5 h-5 mr-2" />
                   End Session
                 </Button>
               </div>

@@ -1,188 +1,117 @@
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { Music, Video, MapPin, Users, Bot, Compass, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
-import { YourDayWidget } from '@/components/dashboard/YourDayWidget';
-import { ZodiacWidget } from '@/components/dashboard/ZodiacWidget';
-import { HoroscopeWidget } from '@/components/dashboard/HoroscopeWidget';
-import { DivineMessageWidget } from '@/components/dashboard/DivineMessageWidget';
-import { RegionalTrendingWidget } from '@/components/dashboard/RegionalTrendingWidget';
-import { AIRecommendedReelsWidget } from '@/components/dashboard/AIRecommendedReelsWidget';
-import { DailyBhajanWidget } from '@/components/dashboard/DailyBhajanWidget';
-import { TempleOfDayWidget } from '@/components/dashboard/TempleOfDayWidget';
-import { PanchangamWidget } from '@/components/dashboard/PanchangamWidget';
 import { AIChatbot } from '@/components/ai-assistant/AIChatbot';
-import { BottomNav } from '@/components/navigation/BottomNav';
-import { SearchBar } from '@/components/search/SearchBar';
-import { useBackgroundRefresh } from '@/hooks/useBackgroundRefresh';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Bot } from 'lucide-react';
+
+const features = [
+  {
+    icon: '🕉️',
+    title: 'Daily Meditation',
+    subtitle: '12-min OM resonance',
+    link: '/meditation',
+    gradient: 'from-primary/30 to-gold/20',
+  },
+  {
+    icon: '🎵',
+    title: 'Devotional Music',
+    subtitle: 'Sacred mantras & bhajans',
+    link: '/music',
+    gradient: 'from-gold/30 to-warm/20',
+  },
+  {
+    icon: '🛕',
+    title: 'Nearby Temples',
+    subtitle: 'Find temples near you',
+    link: '/temple-map',
+    gradient: 'from-temple/30 to-primary/20',
+  },
+  {
+    icon: '🙏',
+    title: 'Dharma AI Chat',
+    subtitle: 'Spiritual guidance',
+    link: '/ai-helper',
+    gradient: 'from-accent/30 to-temple/20',
+  },
+];
 
 function MainApp() {
   const { preferences } = useUserPreferences();
   const [showChatbot, setShowChatbot] = useState(false);
-  
-  const stateName = INDIAN_STATES.find(s => s.value === preferences.state)?.label || 'India';
-  const langName = LANGUAGES.find(l => l.value === preferences.language)?.label || 'Hindi';
-  const deityInfo = DEITIES.find(d => d.value === preferences.deity);
-
-  // Enable background refresh
-  useBackgroundRefresh({
-    deity: preferences.deity,
-    zodiacSign: preferences.zodiacSign,
-    state: preferences.state,
-    language: preferences.language,
-    enabled: true
-  });
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 glass-warm border-b border-border">
-        <div className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-display font-bold text-gradient-divine">Bhakti</h1>
-              <p className="text-xs text-muted-foreground">Welcome back, {preferences.name}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl animate-float">{deityInfo?.icon || '🕉️'}</span>
-            </div>
-          </div>
-          <SearchBar />
-        </div>
+      <header className="p-6 pt-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <span className="text-5xl mb-4 block animate-float-slow">🕉️</span>
+          <h1 className="text-3xl font-display font-bold text-gradient-divine mb-2">
+            Dharma Hub
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Peace • Meditation • Devotion
+          </p>
+        </motion.div>
       </header>
 
-      {/* Content */}
-      <main className="p-4 space-y-6">
-        {/* Personalized Dashboard Widgets */}
-        <div className="space-y-4">
-          <YourDayWidget 
-            deity={preferences.deity} 
-            name={preferences.name}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ZodiacWidget zodiacSign={preferences.zodiacSign} />
-            <HoroscopeWidget zodiacSign={preferences.zodiacSign} />
-          </div>
-
-          <DivineMessageWidget />
-          
-          {/* AI-Powered Recommendations */}
-          <DailyBhajanWidget
-            state={preferences.state}
-            language={preferences.language}
-            deity={preferences.deity}
-            zodiacSign={preferences.zodiacSign}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TempleOfDayWidget
-              state={preferences.state}
-              deity={preferences.deity}
-            />
-            <PanchangamWidget />
-          </div>
-
-          <AIRecommendedReelsWidget
-            state={preferences.state}
-            language={preferences.language}
-            deity={preferences.deity}
-          />
-          
-          <RegionalTrendingWidget 
-            state={preferences.state}
-            language={preferences.language}
-            deity={preferences.deity}
-          />
-        </div>
-
-        {/* User Preferences Summary */}
-        <div className="bg-card rounded-2xl p-6 shadow-soft border border-border">
-          <h2 className="text-lg font-display font-semibold mb-4">Your Preferences</h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-primary/10 rounded-xl p-3 text-center">
-              <MapPin className="w-5 h-5 mx-auto text-primary mb-1" />
-              <p className="text-xs font-medium">{stateName}</p>
-            </div>
-            <div className="bg-gold/10 rounded-xl p-3 text-center">
-              <span className="text-lg block mb-1">🗣️</span>
-              <p className="text-xs font-medium">{langName.split(' ')[0]}</p>
-            </div>
-            <div className="bg-accent/10 rounded-xl p-3 text-center">
-              <span className="text-lg block mb-1">{deityInfo?.icon}</span>
-              <p className="text-xs font-medium">{deityInfo?.label}</p>
-            </div>
-            <div className="bg-warm/10 rounded-xl p-3 text-center">
-              <span className="text-lg block mb-1">♌</span>
-              <p className="text-xs font-medium">Your Zodiac</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Featured Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Link 
-            to="/meditation" 
-            className="bg-gradient-to-br from-primary/20 to-gold/20 rounded-2xl p-5 shadow-soft border border-primary/20 hover:shadow-warm transition-all hover:scale-[1.02]"
-          >
-            <span className="text-3xl block mb-2">🕉️</span>
-            <h3 className="font-display font-semibold text-lg">Daily Meditation</h3>
-            <p className="text-xs text-muted-foreground">12-min OM resonance</p>
-          </Link>
-          <Link 
-            to="/temple-map" 
-            className="bg-gradient-to-br from-gold/20 to-temple/20 rounded-2xl p-5 shadow-soft border border-gold/20 hover:shadow-warm transition-all hover:scale-[1.02]"
-          >
-            <span className="text-3xl block mb-2">🛕</span>
-            <h3 className="font-display font-semibold text-lg">Nearby Temples</h3>
-            <p className="text-xs text-muted-foreground">Find temples near you</p>
-          </Link>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[
-            { icon: Music, label: 'Regional Music', desc: 'Devotional songs', color: 'bg-primary', link: '/music' },
-            { icon: Video, label: 'Reels', desc: 'Watch & create', color: 'bg-accent', link: '/reels' },
-            { icon: MapPin, label: 'Temples', desc: 'Temple directory', color: 'bg-gold', link: '/temples' },
-            { icon: Users, label: 'Community', desc: 'Join groups', color: 'bg-temple', link: '#' },
-            { icon: Bot, label: 'Ask Divine', desc: 'AI Assistant', color: 'bg-gradient-to-br from-primary to-gold', link: '/ai-helper' },
-          ].map((item) => (
-            item.link === '#' ? (
-              <div key={item.label} className="bg-card rounded-2xl p-4 shadow-soft border border-border hover:shadow-warm transition-all cursor-pointer hover:scale-[1.02]">
-                <div className={`w-10 h-10 rounded-full ${item.color} flex items-center justify-center mb-3`}>
-                  <item.icon className="w-5 h-5 text-primary-foreground" />
+      {/* Main Features Grid */}
+      <main className="flex-1 p-6 pt-4">
+        <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 + 0.2 }}
+            >
+              <Link
+                to={feature.link}
+                className={`block bg-gradient-to-br ${feature.gradient} rounded-2xl p-5 border border-border/50 hover:shadow-warm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
+              >
+                <div className="flex items-center gap-4">
+                  <span className="text-4xl">{feature.icon}</span>
+                  <div>
+                    <h3 className="font-display font-semibold text-lg text-foreground">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {feature.subtitle}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-semibold">{item.label}</h3>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
-              </div>
-            ) : (
-              <Link key={item.label} to={item.link} className="bg-card rounded-2xl p-4 shadow-soft border border-border hover:shadow-warm transition-all cursor-pointer hover:scale-[1.02]">
-                <div className={`w-10 h-10 rounded-full ${item.color} flex items-center justify-center mb-3`}>
-                  <item.icon className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <h3 className="font-semibold">{item.label}</h3>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
               </Link>
-            )
+            </motion.div>
           ))}
         </div>
-      </main>
 
-      {/* Bottom Navigation */}
-      <BottomNav />
+        {/* Welcome Note */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8 text-center max-w-sm mx-auto"
+        >
+          <p className="text-muted-foreground text-sm italic">
+            "The mind is restless and difficult to restrain, but it is subdued by practice."
+          </p>
+          <p className="text-xs text-muted-foreground/70 mt-2">— Bhagavad Gita 6.35</p>
+        </motion.div>
+      </main>
 
       {/* Floating AI Assistant Button */}
       {!showChatbot && (
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="fixed bottom-24 right-4 z-50"
+          transition={{ delay: 1 }}
+          className="fixed bottom-6 right-6 z-50"
         >
           <Button
             onClick={() => setShowChatbot(true)}
