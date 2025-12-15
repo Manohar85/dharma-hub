@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { ArrowLeft, Navigation, ExternalLink, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
@@ -193,7 +193,7 @@ const TempleMapPage = () => {
             <Marker position={userPosition} icon={userIcon}>
               <Popup>
                 <div className="text-center p-1">
-                  <Navigation className="w-4 h-4 mx-auto text-primary mb-1" />
+                  <span className="block text-lg mb-1">📍</span>
                   <p className="font-medium text-sm">Your Location</p>
                 </div>
               </Popup>
@@ -211,10 +211,9 @@ const TempleMapPage = () => {
                     <h3 className="font-medium text-sm mb-2">{temple.name}</h3>
                     <button
                       onClick={() => openInGoogleMaps(temple.lat, temple.lon, temple.name)}
-                      className="flex items-center gap-1 text-xs text-primary hover:underline"
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
                     >
-                      <ExternalLink className="w-3 h-3" />
-                      Open in Google Maps
+                      🔗 Open in Google Maps
                     </button>
                   </div>
                 </Popup>
