@@ -1,13 +1,13 @@
-/* Meditation Screen Styles */
+/* Meditation Screen Styles - Deep Blue Sacred Theme */
 .meditation-screen {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
   background: linear-gradient(180deg, 
-    hsl(var(--background)) 0%, 
-    hsl(20 30% 8%) 50%, 
-    hsl(25 40% 5%) 100%
+    hsl(220 40% 8%) 0%, 
+    hsl(230 35% 12%) 50%, 
+    hsl(240 30% 8%) 100%
   );
   display: flex;
   align-items: center;
@@ -20,10 +20,10 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle at center,
+    ellipse at center,
     transparent 0%,
-    hsl(var(--background) / 0.3) 50%,
-    hsl(var(--background) / 0.8) 100%
+    hsl(220 40% 5% / 0.5) 60%,
+    hsl(220 40% 5% / 0.9) 100%
   );
   pointer-events: none;
 }
@@ -33,7 +33,7 @@
   top: 1rem;
   right: 1rem;
   z-index: 10;
-  background: hsl(var(--muted) / 0.3);
+  background: hsl(220 30% 20% / 0.5);
   backdrop-filter: blur(10px);
   border-radius: 9999px;
 }
@@ -61,27 +61,27 @@
 
 .om-symbol {
   font-size: 8rem;
-  color: hsl(var(--primary));
+  color: hsl(42 85% 55%);
   text-shadow: 
-    0 0 20px hsl(var(--primary) / 0.5),
-    0 0 40px hsl(var(--primary) / 0.3),
-    0 0 60px hsl(var(--primary) / 0.2);
+    0 0 30px hsl(42 85% 55% / 0.6),
+    0 0 60px hsl(25 90% 55% / 0.4),
+    0 0 90px hsl(42 85% 55% / 0.2);
   z-index: 2;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, text-shadow 0.5s ease;
 }
 
 .om-glow {
   position: absolute;
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    hsl(var(--primary) / 0.3) 0%,
-    hsl(var(--primary) / 0.1) 50%,
+    hsl(42 85% 55% / 0.25) 0%,
+    hsl(25 90% 55% / 0.15) 40%,
     transparent 70%
   );
-  filter: blur(20px);
+  filter: blur(25px);
   z-index: 1;
 }
 
@@ -89,7 +89,7 @@
   animation: om-pulse 4s ease-in-out infinite;
 }
 
-/* Breathing Animation for OM Container */
+/* Breathing Animation */
 .om-container.breathing {
   animation: breathe 8s ease-in-out infinite;
 }
@@ -99,56 +99,74 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.15);
+    transform: scale(1.12);
   }
 }
 
 @keyframes om-pulse {
   0%, 100% {
-    opacity: 0.5;
+    opacity: 0.6;
     transform: scale(1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.3);
+    transform: scale(1.25);
   }
 }
 
-/* Timer */
+/* Timer Section */
 .meditation-timer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
+}
+
+.phase-name {
+  font-size: 0.875rem;
+  color: hsl(42 85% 55%);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 500;
 }
 
 .timer-text {
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 300;
-  color: hsl(var(--foreground) / 0.9);
-  letter-spacing: 0.2em;
+  color: hsl(0 0% 90%);
+  letter-spacing: 0.15em;
 }
 
-.timer-label {
-  font-size: 0.875rem;
-  color: hsl(var(--muted-foreground));
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+/* Progress Bar */
+.progress-container {
+  width: 200px;
+  height: 3px;
+  background: hsl(220 30% 20%);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, hsl(42 85% 55%), hsl(25 90% 55%));
+  border-radius: 2px;
+  transition: width 1s linear;
 }
 
 /* Guidance Text */
 .meditation-guidance {
-  max-width: 300px;
+  max-width: 280px;
   font-size: 1rem;
-  line-height: 1.6;
-  color: hsl(var(--muted-foreground));
+  line-height: 1.7;
+  color: hsl(220 20% 70%);
   font-style: italic;
 }
 
 /* Controls */
 .meditation-controls {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .control-buttons {
@@ -158,36 +176,17 @@
   gap: 1.5rem;
 }
 
-.duration-selector {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.duration-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  background: hsl(var(--muted) / 0.3);
-  border: 1px solid hsl(var(--border) / 0.5);
-  color: hsl(var(--muted-foreground));
+.duration-info {
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.duration-btn:hover {
-  background: hsl(var(--muted) / 0.5);
-}
-
-.duration-btn.active {
-  background: hsl(var(--primary) / 0.2);
-  border-color: hsl(var(--primary));
-  color: hsl(var(--primary));
+  color: hsl(220 20% 60%);
+  letter-spacing: 0.05em;
 }
 
 .start-btn {
-  padding: 1rem 2rem;
+  padding: 1rem 2.5rem;
   font-size: 1rem;
   border-radius: 9999px;
+  font-weight: 500;
 }
 
 .playing-controls {
@@ -198,11 +197,25 @@
 
 .mute-btn {
   border-radius: 9999px;
-  background: hsl(var(--muted) / 0.3);
+  background: hsl(220 30% 20% / 0.5);
+  border-color: hsl(220 20% 30%);
+  color: hsl(0 0% 80%);
+}
+
+.mute-btn:hover {
+  background: hsl(220 30% 25% / 0.6);
 }
 
 .stop-btn {
   border-radius: 9999px;
+  background: hsl(220 30% 20% / 0.5);
+  border-color: hsl(220 20% 30%);
+  color: hsl(0 0% 80%);
+  padding: 0.75rem 1.5rem;
+}
+
+.stop-btn:hover {
+  background: hsl(220 30% 25% / 0.6);
 }
 
 /* Responsive */
@@ -217,16 +230,20 @@
   }
   
   .om-glow {
-    width: 140px;
-    height: 140px;
+    width: 160px;
+    height: 160px;
   }
   
   .timer-text {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
   
   .meditation-guidance {
     font-size: 0.875rem;
-    max-width: 260px;
+    max-width: 240px;
+  }
+  
+  .progress-container {
+    width: 160px;
   }
 }
