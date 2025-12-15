@@ -1,6 +1,6 @@
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { Music, Video, MapPin, Users, Bot } from 'lucide-react';
+import { Music, Video, MapPin, Users, Bot, Compass, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
 import { YourDayWidget } from '@/components/dashboard/YourDayWidget';
@@ -124,12 +124,32 @@ function MainApp() {
           </div>
         </div>
 
+        {/* Featured Actions */}
+        <div className="grid grid-cols-2 gap-4">
+          <Link 
+            to="/meditation" 
+            className="bg-gradient-to-br from-primary/20 to-gold/20 rounded-2xl p-5 shadow-soft border border-primary/20 hover:shadow-warm transition-all hover:scale-[1.02]"
+          >
+            <span className="text-3xl block mb-2">🕉️</span>
+            <h3 className="font-display font-semibold text-lg">Daily Meditation</h3>
+            <p className="text-xs text-muted-foreground">12-min OM resonance</p>
+          </Link>
+          <Link 
+            to="/temple-map" 
+            className="bg-gradient-to-br from-gold/20 to-temple/20 rounded-2xl p-5 shadow-soft border border-gold/20 hover:shadow-warm transition-all hover:scale-[1.02]"
+          >
+            <span className="text-3xl block mb-2">🛕</span>
+            <h3 className="font-display font-semibold text-lg">Nearby Temples</h3>
+            <p className="text-xs text-muted-foreground">Find temples near you</p>
+          </Link>
+        </div>
+
         {/* Quick Actions */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
             { icon: Music, label: 'Regional Music', desc: 'Devotional songs', color: 'bg-primary', link: '/music' },
             { icon: Video, label: 'Reels', desc: 'Watch & create', color: 'bg-accent', link: '/reels' },
-            { icon: MapPin, label: 'Temples', desc: 'Nearby temples', color: 'bg-gold', link: '/temples' },
+            { icon: MapPin, label: 'Temples', desc: 'Temple directory', color: 'bg-gold', link: '/temples' },
             { icon: Users, label: 'Community', desc: 'Join groups', color: 'bg-temple', link: '#' },
             { icon: Bot, label: 'Ask Divine', desc: 'AI Assistant', color: 'bg-gradient-to-br from-primary to-gold', link: '/ai-helper' },
           ].map((item) => (

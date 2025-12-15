@@ -15,6 +15,8 @@ const MusicPage = lazy(() => import("./pages/MusicPage"));
 const ReelsPage = lazy(() => import("./pages/ReelsPage"));
 const TemplesPage = lazy(() => import("./pages/TemplesPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const MeditationPage = lazy(() => import("./pages/MeditationPage"));
+const TempleMapPage = lazy(() => import("./pages/TempleMapPage"));
 
 const queryClient = new QueryClient();
 
@@ -44,6 +46,8 @@ const App = () => (
                 <Route path="/temples" element={<TemplesPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/ai-helper" element={<AIHelper />} />
+                <Route path="/meditation" element={<MeditationPage />} />
+                <Route path="/temple-map" element={<TempleMapPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
