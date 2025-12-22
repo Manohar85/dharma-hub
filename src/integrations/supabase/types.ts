@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_mantras: {
+        Row: {
+          created_at: string
+          day_of_week: number | null
+          deity: Database["public"]["Enums"]["deity"] | null
+          id: string
+          meaning: string | null
+          sanskrit_text: string
+          transliteration: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number | null
+          deity?: Database["public"]["Enums"]["deity"] | null
+          id?: string
+          meaning?: string | null
+          sanskrit_text: string
+          transliteration?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number | null
+          deity?: Database["public"]["Enums"]["deity"] | null
+          id?: string
+          meaning?: string | null
+          sanskrit_text?: string
+          transliteration?: string | null
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string | null
