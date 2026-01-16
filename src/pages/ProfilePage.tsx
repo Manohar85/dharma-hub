@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Heart, Music, Video, MapPin, LogOut, Edit2, Bell, Moon, Globe, Plus, FileText } from 'lucide-react';
+import { 
+  Settings, Heart, Music, Video, MapPin, LogOut, Edit2, Bell, Moon, 
+  Globe, ChevronRight, Sparkles, BookOpen, Compass
+} from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { INDIAN_STATES, LANGUAGES, DEITIES } from '@/lib/constants';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { PageHeader } from '@/components/navigation/PageHeader';
 import { AddContentModal } from '@/components/profile/AddContentModal';
+
 export default function ProfilePage() {
   const [showAddMusic, setShowAddMusic] = useState(false);
   const [showAddPost, setShowAddPost] = useState(false);
@@ -24,45 +27,150 @@ export default function ProfilePage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-24">
-      <PageHeader title="Profile" subtitle="Manage your spiritual journey" />
+  const journeyItems = [
+    { icon: BookOpen, label: 'Wisdom Gained', value: '12', color: 'text-primary' },
+    { icon: Music, label: 'Bhajans Played', value: '48', color: 'text-gold' },
+    { icon: Compass, label: 'Temples Visited', value: '3', color: 'text-temple' },
+  ];
 
-      <main className="p-4 space-y-6">
-        {/* Profile Header */}
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24">
+      {/* Ambient Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gold/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+      </div>
+
+      {/* Profile Header */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative z-10"
+      >
+        {/* Banner */}
+        <div className="h-32 bg-gradient-to-br from-primary/30 via-gold/20 to-temple/30 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_hsl(var(--background))_100%)]" />
+          <motion.div
+            className="absolute top-4 right-4 w-20 h-20 rounded-full bg-gold/20 blur-2xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 4, repeat: Infinity }}
+          />
+        </div>
+
+        {/* Avatar & Info */}
+        <div className="px-6 -mt-16 relative z-10">
+          <div className="flex items-end gap-4">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="relative"
+            >
+              <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary to-gold flex items-center justify-center border-4 border-background shadow-lg">
+                <span className="text-5xl">{deityInfo?.icon || '🙏'}</span>
+              </div>
+              <Button 
+                size="icon" 
+                variant="secondary"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full shadow-md"
+              >
+                <Edit2 className="w-4 h-4" />
+              </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="pb-2"
+            >
+              <h1 className="text-2xl font-display font-bold">{preferences.name}</h1>
+              <p className="text-muted-foreground flex items-center gap-1.5">
+                <MapPin className="w-4 h-4" />
+                {stateName} • {langName.split(' ')[0]}
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+
+      <main className="relative z-10 px-4 pt-6 space-y-5">
+        {/* Spiritual Journey */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
         >
-          <Card className="relative overflow-hidden">
-            <div className="h-24 bg-gradient-to-r from-primary/30 via-gold/20 to-accent/30" />
-            <div className="px-6 pb-6">
-              <div className="relative -mt-12 flex items-end gap-4">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-gold flex items-center justify-center border-4 border-background shadow-lg">
-                  <span className="text-4xl">{deityInfo?.icon || '🙏'}</span>
-                </div>
-                <div className="flex-1 pb-1">
-                  <h2 className="text-2xl font-display font-bold">{preferences.name}</h2>
-                  <p className="text-muted-foreground">{stateName} • {langName}</p>
-                </div>
-                <Button variant="outline" size="icon">
-                  <Edit2 className="w-4 h-4" />
-                </Button>
+          <Card className="p-5 bg-card/60 backdrop-blur-sm border-border/50">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-gold" />
+              <h2 className="font-display font-bold">Your Spiritual Journey</h2>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {journeyItems.map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + i * 0.05 }}
+                  className="text-center p-3 rounded-2xl bg-muted/50"
+                >
+                  <item.icon className={`w-6 h-6 mx-auto mb-2 ${item.color}`} />
+                  <p className="text-2xl font-bold">{item.value}</p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Preferences Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="p-5 bg-card/60 backdrop-blur-sm border-border/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold">Your Dharma Profile</h2>
+              <Button variant="ghost" size="sm" className="text-primary">
+                Edit <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                <MapPin className="w-5 h-5 text-primary mb-2" />
+                <p className="font-medium text-sm">{stateName}</p>
+                <p className="text-xs text-muted-foreground">Region</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/20">
+                <Globe className="w-5 h-5 text-gold mb-2" />
+                <p className="font-medium text-sm">{langName.split(' ')[0]}</p>
+                <p className="text-xs text-muted-foreground">Language</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-temple/10 to-temple/5 border border-temple/20">
+                <span className="text-2xl block mb-1">{deityInfo?.icon}</span>
+                <p className="font-medium text-sm">{deityInfo?.label}</p>
+                <p className="text-xs text-muted-foreground">Ishta Devata</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20">
+                <span className="text-2xl block mb-1">♌</span>
+                <p className="font-medium text-sm">{preferences.zodiacSign}</p>
+                <p className="text-xs text-muted-foreground">Rashi</p>
               </div>
             </div>
           </Card>
         </motion.div>
 
-        {/* Add Content Buttons */}
+        {/* Quick Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 gap-4"
+          transition={{ delay: 0.35 }}
+          className="grid grid-cols-2 gap-3"
         >
           <Button
             onClick={() => setShowAddMusic(true)}
-            className="h-14 gradient-saffron shadow-warm"
+            className="h-14 rounded-2xl gradient-saffron shadow-warm"
           >
             <Music className="w-5 h-5 mr-2" />
             Add Music
@@ -70,116 +178,55 @@ export default function ProfilePage() {
           <Button
             onClick={() => setShowAddPost(true)}
             variant="outline"
-            className="h-14 border-primary hover:bg-primary/10"
+            className="h-14 rounded-2xl border-primary/30 hover:bg-primary/10"
           >
-            <FileText className="w-5 h-5 mr-2" />
-            Add Post
+            <Video className="w-5 h-5 mr-2" />
+            Share Reel
           </Button>
-        </motion.div>
-
-        {/* Preferences Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="p-6">
-            <h3 className="text-lg font-display font-semibold mb-4">Your Preferences</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-primary/10 rounded-xl p-4">
-                <MapPin className="w-5 h-5 text-primary mb-2" />
-                <p className="text-sm font-medium">{stateName}</p>
-                <p className="text-xs text-muted-foreground">Region</p>
-              </div>
-              <div className="bg-gold/10 rounded-xl p-4">
-                <Globe className="w-5 h-5 text-gold mb-2" />
-                <p className="text-sm font-medium">{langName.split(' ')[0]}</p>
-                <p className="text-xs text-muted-foreground">Language</p>
-              </div>
-              <div className="bg-accent/10 rounded-xl p-4">
-                <span className="text-2xl block mb-1">{deityInfo?.icon}</span>
-                <p className="text-sm font-medium">{deityInfo?.label}</p>
-                <p className="text-xs text-muted-foreground">Ishta Devata</p>
-              </div>
-              <div className="bg-warm/10 rounded-xl p-4">
-                <span className="text-2xl block mb-1">♌</span>
-                <p className="text-sm font-medium">{preferences.zodiacSign}</p>
-                <p className="text-xs text-muted-foreground">Zodiac Sign</p>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="p-6">
-            <h3 className="text-lg font-display font-semibold mb-4">Your Activity</h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                  <Heart className="w-6 h-6 text-primary" />
-                </div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-xs text-muted-foreground">Liked</p>
-              </div>
-              <div>
-                <div className="w-12 h-12 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-2">
-                  <Music className="w-6 h-6 text-gold" />
-                </div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-xs text-muted-foreground">Played</p>
-              </div>
-              <div>
-                <div className="w-12 h-12 mx-auto rounded-full bg-accent/10 flex items-center justify-center mb-2">
-                  <Video className="w-6 h-6 text-accent" />
-                </div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-xs text-muted-foreground">Viewed</p>
-              </div>
-            </div>
-          </Card>
         </motion.div>
 
         {/* Settings */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
         >
-          <Card className="divide-y divide-border">
-            <div className="p-4 flex items-center justify-between">
+          <Card className="overflow-hidden bg-card/60 backdrop-blur-sm border-border/50">
+            <div className="p-4 flex items-center justify-between border-b border-border/50">
               <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-muted-foreground" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-primary" />
+                </div>
                 <div>
-                  <p className="font-medium">Push Notifications</p>
-                  <p className="text-xs text-muted-foreground">Daily reminders & updates</p>
+                  <p className="font-medium">Daily Reminders</p>
+                  <p className="text-xs text-muted-foreground">Morning mantras & evening aarti</p>
+                </div>
+              </div>
+              <Switch />
+            </div>
+            <div className="p-4 flex items-center justify-between border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center">
+                  <Moon className="w-5 h-5 text-gold" />
+                </div>
+                <div>
+                  <p className="font-medium">Dark Mode</p>
+                  <p className="text-xs text-muted-foreground">Easier on the eyes</p>
                 </div>
               </div>
               <Switch />
             </div>
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Dark Mode</p>
-                  <p className="text-xs text-muted-foreground">Coming soon</p>
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-muted-foreground" />
                 </div>
-              </div>
-              <Switch disabled />
-            </div>
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Settings className="w-5 h-5 text-muted-foreground" />
                 <div>
                   <p className="font-medium">App Settings</p>
-                  <p className="text-xs text-muted-foreground">Manage app behavior</p>
+                  <p className="text-xs text-muted-foreground">Privacy, notifications & more</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Edit</Button>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
           </Card>
         </motion.div>
@@ -188,21 +235,23 @@ export default function ProfilePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.45 }}
         >
-          <Card className="p-4 border-destructive/30">
+          <Card className="p-4 bg-destructive/5 border-destructive/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <LogOut className="w-5 h-5 text-destructive" />
+                <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                  <LogOut className="w-5 h-5 text-destructive" />
+                </div>
                 <div>
-                  <p className="font-medium text-destructive">Reset Preferences</p>
-                  <p className="text-xs text-muted-foreground">Start fresh with onboarding</p>
+                  <p className="font-medium">Start Fresh</p>
+                  <p className="text-xs text-muted-foreground">Reset all preferences</p>
                 </div>
               </div>
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
-                className="border-destructive text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleResetPreferences}
               >
                 Reset
